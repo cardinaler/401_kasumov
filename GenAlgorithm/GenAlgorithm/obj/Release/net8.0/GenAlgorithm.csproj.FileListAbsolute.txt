@@ -1,0 +1,11 @@
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\bin\Release\net8.0\GenAlgorithm.deps.json
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\bin\Release\net8.0\GenAlgorithm.dll
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\bin\Release\net8.0\GenAlgorithm.pdb
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.AssemblyInfoInputs.cache
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.AssemblyInfo.cs
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.csproj.CoreCompileInputs.cache
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.dll
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\refint\GenAlgorithm.dll
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\GenAlgorithm.pdb
+C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\obj\Release\net8.0\ref\GenAlgorithm.dll

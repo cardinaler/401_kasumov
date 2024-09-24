@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>GenAlg_Kasumov-ex</id>
+    <version>1.0.0</version>
+    <title>GenAlgorithm_Kasumov</title>
+    <authors>GenAlgorithm</authors>
+    <description>Package Description</description>
+    <repository type="git" />
+    <dependencies>
+      <group targetFramework="net8.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\ruslan\source\repos\GenAlgorithm\GenAlgorithm\bin\Release\net8.0\GenAlgorithm.dll" target="lib\net8.0\GenAlgorithm.dll" />
+  </files>
+</package>

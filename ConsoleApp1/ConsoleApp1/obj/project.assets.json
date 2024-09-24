@@ -1,0 +1,104 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "GenAlgor_Kasumov/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/GenAlgorithm.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/GenAlgorithm.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "GenAlgor_Kasumov/1.0.0": {
+      "sha512": "CXEVP6GGmhVYENzdpZEE9ba+9P0k3kGo/TraZK+yEpKi+bTxqEY1pEk7/hUjSPQprZnn/V7yb2cW42r++njRyA==",
+      "type": "package",
+      "path": "genalgor_kasumov/1.0.0",
+      "files": [
+        ".nupkg.metadata",
+        "genalgor_kasumov.1.0.0.nupkg.sha512",
+        "genalgor_kasumov.nuspec",
+        "lib/net8.0/GenAlgorithm.dll"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "GenAlgor_Kasumov >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\ruslan\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\ruslan\\Desktop\\task1_GenAlg_C#\\lab1\\ConsoleApp1\\ConsoleApp1\\ConsoleApp1.csproj",
+      "projectName": "ConsoleApp1",
+      "projectPath": "C:\\Users\\ruslan\\Desktop\\task1_GenAlg_C#\\lab1\\ConsoleApp1\\ConsoleApp1\\ConsoleApp1.csproj",
+      "packagesPath": "C:\\Users\\ruslan\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ruslan\\Desktop\\task1_GenAlg_C#\\lab1\\ConsoleApp1\\ConsoleApp1\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\ruslan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Users\\ruslan\\Desktop\\task1_GenAlg_C#\\ConsoleApp1\\ConsoleApp1": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "GenAlgor_Kasumov": {
+            "target": "Package",
+            "version": "[1.0.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
