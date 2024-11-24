@@ -1,0 +1,455 @@
+﻿using System.Windows.Input;
+using LiveCharts;
+using LiveCharts.Configurations;
+using LiveCharts.Wpf;
+using Microsoft.Win32;
+using System.ComponentModel;
+using System.Windows;
+using GenAlgorithm_Kasumov;
+using System.Data;
+
+namespace ViewModel
+{
+    public class ViewData: ViewModelBase, IDataErrorInfo
+    {
+        bool KeepRunning;
+
+        bool StillRunning;
+
+        public List<List<int>> distance { get; set; }
+        public List<string> BestScoreList { get; set; }
+
+        public List<List<double>> ChartBestScoreList { get; set; }
+        public int IndividNums { get; set; }         //Число особей в начальной популяции
+        public double CrossingShare { get; set; }    //Доля скрещиваний
+        public double TurnamentsShare { get; set; }  //Доля турниров в селекции
+        public double MutationShare { get; set; }    //Доля мутаций
+        bool ExecutedOnce = false;
+
+        public int MatrixSize { get; set; }
+
+        public GenAlg? Alg { get; set; }
+
+        public ICommand RunCommand { get; set; }
+        public ICommand StopCommand { get; set; }
+        public ICommand GenerateMatrixCommand { get; set; }
+        public ICommand ContinueRunCommand { get; set; }
+        public ICommand SaveCommand { get; set; }
+        public ICommand LoadCommand { get; set; }
+
+        public CartesianChart ChartModelSpline { get; set; } // Требуемый график
+        public DataTable MatrixDt { get; set; }
+
+        public DataTable BestIndiDt { get; set; }
+
+        public ViewData()
+        {
+            MatrixSize = 0;
+
+            RunCommand = new RelayCommand(ExecuteHandler, CanExecuteHandler);
+
+            ContinueRunCommand = new RelayCommand(ContinueExecuteHandler, ExecutedOnceHandler);
+
+            StopCommand = new RelayCommand(StopHandler);
+
+            GenerateMatrixCommand = new RelayCommand(GenerateMatrixHandler, CanGenerateMatrix);
+
+            SaveCommand = new RelayCommand(SaveHandler, ExecutedOnceHandler);
+
+            LoadCommand = new RelayCommand(LoadHandler);
+
+            
+            
+
+            KeepRunning = false;
+            StillRunning = false;
+            Alg = null;
+            this.ChartModelSpline = new CartesianChart();
+            BestScoreList = new List<string>();
+            ChartBestScoreList = new List<List<double>>();
+            distance = new List<List<int>>();
+            MatrixDt = new DataTable();
+            BestIndiDt = new DataTable();
+            
+            
+        }
+
+        
+
+        public bool CanGenerateMatrix(object sender)
+        {
+            List<string> vars = ["MatrixSize"];
+            for (int i = 0; i < vars.Count(); ++i)
+            {
+                if (this[vars[i]] != "")
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void GenerateMatrixHandler(object sender)
+        {
+            InitDistance(MatrixSize);
+            InitDataTable(MatrixSize);
+            RaisePropertyChanged(nameof(MatrixDt));
+        }
+
+        public void InitDistance(int N)
+        {
+            int L = 10;
+            int R = 100;
+            Random rnd = new Random();
+            List<int> tmp = new List<int>();
+            distance = new List<List<int>>();
+            for(int i = 0; i < N; ++i)
+            {
+                List<int> ints = new List<int>();
+                for(int j = 0; j < N; ++j)
+                {
+                    ints.Add(0);
+                }
+                distance.Add(ints);
+            }
+            for(int i = 0; i < N; ++i)
+            {
+                tmp.Add(R);
+            }
+            for(int i = 0; i < N; ++i)
+            {
+                for(int j = i + 1; j < N; ++j)
+                {
+                    if(i == 0)
+                    {
+                        distance[i][j] = rnd.Next(L, R);
+                    }
+                    else
+                    {
+                        distance[i][j] = rnd.Next(L, tmp[i] + tmp[j]);
+                    }
+                }
+                distance[i][i] = 0;
+                for(int j = 0; j < N; ++j)
+                {
+                    distance[j][i] = distance[i][j];
+                }
+
+                for (int j = i + 1; j < N; ++j)
+                {
+                    tmp[j] = Math.Min(tmp[j], distance[i][j]);
+                }
+            }
+        }
+
+        
+        public IEnumerable<string>? Listbox_BestScoreList
+        {
+            get
+            {
+                if (BestScoreList.Count == 0)
+                {
+                    return null;
+                }
+                else
+                {
+                    return BestScoreList;
+                }
+            }
+        }
+
+        public string this[string ColumnName]
+        {
+            get
+            {
+                string error = string.Empty;
+                switch (ColumnName)
+                {
+                    case "StillRunning":
+                        if(StillRunning == true)
+                        {
+                            error += "Дождитесь завершения алгоритма\n";
+                        }
+                        break;
+                    case "KeepRunning":
+                        if(KeepRunning == true)
+                        {
+                            error += "Дождитесь завершения алгоритма\n";
+                        }
+                        break;
+                    case "CrossingShare":
+                        if (this.CrossingShare < 0 || this.CrossingShare > 1)
+                        {
+                            error += "Доля скрещиваний должна лежать в отрезке [0, 1]\n";
+                        }
+                        break;
+
+                    case "TurnamentsShare":
+                        if (this.TurnamentsShare < 0 || this.TurnamentsShare > 1)
+                        {
+                            error += "Доля турниров должна лежать в отрезке [0, 1]\n";
+                        }
+                        break;
+
+                    case "MutationShare":
+                        if (this.MutationShare < 0 || this.MutationShare > 1)
+                        {
+                            error += "Доля мутаций должна лежать в отрезке [0, 1]\n";
+                        }
+                        break;
+
+                    case "IndividNums":
+                        if (this.IndividNums < 1)
+                        {
+                            error += "Число особей должно быть положительно.\n";
+                        }
+                        break;
+
+                    case "MatrixSize":
+                        if(MatrixSize <= 0)
+                        {
+                            error += "Размер матрицы не задан\n";
+                        }
+                        break;
+
+                    case "distance":
+                        if(distance.Count == 0)
+                        {
+                            error += "Матрица еще не задана\n";
+                        }
+                        break;
+                    case "ExecutedOnce":
+                        if(!ExecutedOnce)
+                        {
+                            error += "Нечего продолжать\n";
+                        }
+                        break;
+                }
+                return error;
+            }
+        }
+
+        public bool CanExecuteHandler(object sender)
+        {
+            List<string> vars = ["distance", "StillRunning", "CrossingShare", "TurnamentsShare", "MutationShare", "IndividNums", "KeepRunning"];
+            for (int i = 0; i < vars.Count(); ++i)
+            {
+                if (this[vars[i]] != "")
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool ExecutedOnceHandler(object sender)
+        {
+            List<string> vars = ["ExecutedOnce"];
+            for (int i = 0; i < vars.Count(); ++i)
+            {
+                if (this[vars[i]] != "")
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        public void Execute()
+        {
+            double prev = Double.MaxValue;
+            int cnt = 0;
+            BestScoreList = new List<string>();
+            ChartBestScoreList = new List<List<double>>();
+            while (this.KeepRunning && Alg.population.Count > 2)
+            {
+                cnt++;
+                Alg.LifeCycle();
+                if (Alg.best_score < prev)
+                {
+                    BestScoreList = new List<string>(BestScoreList);
+                    BestScoreList.Add(Alg.best_score.ToString("f5") + "    " + cnt.ToString());
+                    ChartBestScoreList.Add(new List<double> {cnt, Alg.best_score});
+                    RaisePropertyChanged(nameof(Listbox_BestScoreList));
+                    
+                    prev = Alg.best_score;
+                }
+            }
+
+            if (Alg.population.Count <= 2)
+            {
+                MessageBox.Show("Популяция вымерла");
+                KeepRunning = false;
+            }
+            InitChartBestScore();
+            InitBestScoreDataTable();
+            StillRunning = false;
+            ExecutedOnce = true;
+        }
+
+        public void ExecuteHandler(object sender)
+        {
+            Alg = new GenAlg(distance, IndividNums, TurnamentsShare, CrossingShare, MutationShare);
+            Thread thread = new Thread(Execute);
+            KeepRunning = true;
+            StillRunning = true;
+            thread.IsBackground = true;
+            thread.Start();
+
+        }
+
+        public void ContinueExecuteHandler(object sender)
+        {
+            Thread thread = new Thread(Execute);
+            KeepRunning = true;
+            StillRunning = true;
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        public void StopHandler(object sender)
+        {
+            KeepRunning = false;
+        }
+
+        public void SaveHandler(object sender)
+        {
+            try
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                string FilePath = "";
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    FilePath = saveFileDialog.FileName;
+                }
+                Alg.SaveStatement(FilePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+
+        public void LoadHandler(object sender)
+        {
+            try
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                string FilePath = "";
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    FilePath = openFileDialog.FileName;
+                }
+                Alg = new GenAlg(FilePath);
+                this.TurnamentsShare = Alg.turnaments_share;
+                this.MutationShare = Alg.mutation_share;
+                this.CrossingShare = Alg.crossing_share;
+                this.IndividNums = Alg.IndividNums;
+                this.distance = Alg.distance;
+                this.MatrixSize = Alg.distance.Count;
+                RaisePropertyChanged(nameof(TurnamentsShare));
+                RaisePropertyChanged(nameof(MutationShare));
+                RaisePropertyChanged(nameof(CrossingShare));
+                RaisePropertyChanged(nameof(IndividNums));
+                RaisePropertyChanged(nameof(MatrixSize));
+                InitDataTable(MatrixSize);
+                RaisePropertyChanged(nameof(MatrixDt));
+                InitBestScoreDataTable();
+                this.ExecutedOnce = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+        
+        public string Error
+        {
+            get { throw new NotImplementedException(); }
+        }
+        public void InitDataTable(int N)
+        {
+            MatrixDt = new DataTable();
+            MatrixDt.Columns.Add("-");
+            for (int i = 0; i < N; i++)
+            {
+                MatrixDt.Columns.Add(i.ToString(), typeof(double));
+            }
+            for (int i = 0; i < N; i++)
+            {
+                DataRow dr = MatrixDt.NewRow();
+                dr[0] = i;
+                for (int j = 1; j < N + 1; j++)
+                {
+                    dr[j] = distance[i][j - 1];
+                }
+                MatrixDt.Rows.Add(dr);
+            }
+            
+        }
+        public void InitBestScoreDataTable()
+        {
+            BestIndiDt = new DataTable();
+            for(int i = 0; i < Alg.best_indi.Count + 1; ++i)
+            {
+                BestIndiDt.Columns.Add(i.ToString());
+            }
+            BestIndiDt.Columns.Add("Score");
+
+            DataRow dr = BestIndiDt.NewRow();
+            dr[0] = 0;
+            dr[Alg.best_indi.Count + 1] = 0;
+            int cnt = 0;
+            for (int i = 1; i <  Alg.best_indi.Count; ++i)
+            {
+                dr[i] = distance[Alg.best_indi[i]][Alg.best_indi[i - 1]];
+                cnt += distance[Alg.best_indi[i]][Alg.best_indi[i - 1]];
+            }
+            dr[Alg.best_indi.Count] = distance[Alg.best_indi.Last()][Alg.best_indi[0]];
+            cnt += distance[Alg.best_indi.Last()][Alg.best_indi[0]];
+            dr[Alg.best_indi.Count + 1] = cnt;
+            BestIndiDt.Rows.Add(dr);
+
+
+            dr = BestIndiDt.NewRow();
+            for(int i = 0; i < Alg.best_indi.Count; ++i)
+            {
+                dr[i] = Alg.best_indi[i];
+            }
+            dr[Alg.best_indi.Count] = Alg.best_indi[0];
+            
+            BestIndiDt.Rows.Add(dr);
+            RaisePropertyChanged(nameof(BestIndiDt));
+            
+        }
+
+
+        public void InitChartBestScore()
+        {
+            var BestScoreValues = new ChartValues<Point>();
+            int cnt = 0;
+            for(int i = Math.Max(ChartBestScoreList.Count - 5, 0); i < ChartBestScoreList.Count ; ++i)
+            {
+                cnt++;
+                var point = new Point() { X = ChartBestScoreList[i][0], Y = ChartBestScoreList[i][1]};
+                BestScoreValues.Add(point);
+            }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                ChartModelSpline.Series.Clear();
+
+                this.ChartModelSpline.Series = new SeriesCollection
+                {
+                    new ScatterSeries
+                    {
+                        Configuration = new CartesianMapper<Point>()
+                        .X(point => point.X) // Define a function that returns a value that should map to the x-axis
+                        .Y(point => point.Y), // Define a function that returns a value that should map to the y-axis
+                        Title = "Series",
+                        Values = BestScoreValues,
+                    },
+                };
+            });      
+        }
+    }
+}
