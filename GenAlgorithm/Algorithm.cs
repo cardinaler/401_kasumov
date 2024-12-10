@@ -95,8 +95,9 @@ namespace GenAlgorithm_Kasumov
         public void LoadStatement(string dbPath, string ExperName)
         {
             using(LoadAppContext db = new LoadAppContext(dbPath))
-            {
+            { 
                 var States = db.States
+                               .Where(c => c.name == ExperName)
                                .Include(c => c.BestIndi)
                                .Include(c => c.Population)
                                .ThenInclude(c => c.indi)
