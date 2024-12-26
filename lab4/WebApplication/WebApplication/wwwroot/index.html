@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script src="js/main.js" defer></script>
+
+</head>
+<body>
+    <h2>Программа</h2>
+    <div id="matrixDiv" runat="server"></div>
+    <div id="message"></div>
+    <div>
+        <p>
+            Доля скрещиваний: <br />
+            <input type="number" name="crossingShare" id="crossingShare" step="0.1" min="0.1" max="1" />
+        </p>
+        <p>
+            Доля турниров: <br />
+            <input type="number" name="tournamentsShare" id="tournamentsShare" step="0.1" min="0.1" max="1" />
+        </p>
+        <p>
+            Доля мутаций: <br />
+            <input type="number" name="mutationShare" id="mutationShare" step="0.1" min="0.1" max="1" />
+        </p>
+        <p>
+            Число особей при старте: <br />
+            <input type="number" name="individNums" id="individNums" />
+        </p>
+        <p>
+            Размер матрицы расстояний: <br />
+            <input type="number" name="matrixSize" id="matrixSize" />
+        </p>
+        <button id="generExp" onclick="ExpCreate()">Создать эксперимент</button>
+    </div>
+    <div class="col-sm-3 col-xs-12">
+        <div class="text-center">
+            <h4>Управление</h4>
+            <hr />
+        </div>
+        <div class="mb-3">
+            <label for="experimentId" class="form-label">ID эксперимента:</label>
+            <input type="text" min="0" id="experimentId" name="experimentId" class="form-control">
+        </div>
+        <hr />
+        <button type="button" class="btn btn-primary" onclick="deleteExp()">Удалить</button>
+        <button type="button" class="btn btn-primary" onclick="DoStep()">Шаг</button>
+        <button type="button" class="btn btn-primary" onclick="StartOpt()">Старт</button>
+        <button type="button" class="btn btn-primary" onclick="StopOpt()">Стоп</button>
+
+        <div style="margin-bottom: 2em"></div>
+    </div>
+    <div class="col-sm-6 col-xs-12">
+        <div class="text-center">
+            <h4>Лучшая особь</h4>
+            <hr />
+        </div>
+        <div class="mb-3">
+            <label for="best" class="form-label">Инфо:</label>
+            <input type="text" disabled id="best" name="best" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="epochNum" class="form-label">Текущая эпоха:</label>
+            <input type="number" min="0" disabled id="epochNum" name="epochNum" class="form-control">
+        </div>
+    </div>
+    <div class="collapse" id="table-container"></div>
+
+    
+
+
+</body>
+</html>

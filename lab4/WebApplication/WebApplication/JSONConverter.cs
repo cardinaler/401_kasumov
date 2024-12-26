@@ -4,7 +4,7 @@ internal class JSONConverter
 {
     public static string MatrixToJson(List<List<int>> matrix)
     {
-        int rws = matrix.Count, cls = matrix.Count;
+        int rws = matrix.Count, cls = matrix[0].Count;
         double[][] arr = new double[rws][];
         for (int i = 0; i < rws; i++)
         {

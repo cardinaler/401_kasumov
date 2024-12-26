@@ -18,6 +18,15 @@ namespace GenAlgorithm_Kasumov
         Random rnd; //Ядро рандома
 
         public bool proceed;
+        public int iternum = 0;
+        public GenAlg()
+        {
+            this.distance = new List<List<int>>();
+            this.population = new List<List<int>>();
+            this.best_indi = new List<int>();
+            this.rnd = new Random(DateTime.Now.Ticks.GetHashCode());
+
+        }
         public GenAlg(List<List<int>> distance, int IndividNums, double turnaments_share, double crossing_share, double mutation_share, bool proceed = false, string db_name = "")
         {
             this.distance = distance;
@@ -37,121 +46,13 @@ namespace GenAlgorithm_Kasumov
             generate_population();
         }
 
-        public GenAlg(string dbPath, string ExperName)
-        {
-         //   this.ExperName = ExperName;
-            this.distance = new List<List<int>>();
-            this.population = new List<List<int>>();
-            this.best_indi = new List<int>();
-            this.rnd = new Random(DateTime.Now.Ticks.GetHashCode());
-            this.LoadStatement(dbPath, ExperName);
-        }
-        public void SaveStatement(string dbPath, string ExperName)
-        {
-            using (SaveContext db = new SaveContext(dbPath))
-            {
-                State St = new State();
-                St.best_score = this.best_score;
-                St.crossing_share = this.crossing_share;
-                St.turnaments_share = this.turnaments_share;
-                St.mutation_share = this.mutation_share;
-                St.name = ExperName;
-                db.States.AddRange(St);
-
-                List<BestIndiGen> BestInd = new List<BestIndiGen>();
-                for (int i = 0; i < this.best_indi.Count; ++i)
-                {
-                    BestInd.Add(new BestIndiGen { gen = this.best_indi[i], State = St });
-                }
-                db.BestIndi.AddRange(BestInd);
-                for(int i = 0; i < this.population.Count; ++i)
-                {
-                    Indi In = new Indi();
-                    In.State = St;
-                    db.Population.Add(In);
-                    List<IndiGen> IndiGens = new List<IndiGen>();
-              
-                    for(int j = 0; j < this.population[i].Count; ++j)
-                    {
-                        IndiGens.Add(new IndiGen { gen = this.population[i][j], Indi = In });
-                    }
-                    db.Indi.AddRange(IndiGens);
-                }
-                for(int i = 0; i < this.distance.Count; ++i)
-                {
-                    Path path = new Path();
-                    path.State = St;
-                    db.Distance.Add(path);
-                    List<City> cities = new List<City>();
-                    for(int j = 0; j < this.distance[i].Count; ++j)
-                    {
-                        cities.Add(new City { CityValue = this.distance[i][j], Path = path });
-                    }
-                    db.Path.AddRange(cities);
-                }
-                db.SaveChanges();
-            }
-        }
-        public void LoadStatement(string dbPath, string ExperName)
-        {
-            using(LoadAppContext db = new LoadAppContext(dbPath))
-            {
-                var St = db.States
-                               .Where(c => (c.name == ExperName))
-                               .Include(c => c.BestIndi)
-                               .Include(c => c.Population)
-                               .ThenInclude(c => c.indi)
-                               .Include(c => c.Distances)
-                               .ThenInclude(c => c.path)
-                               .First();
-                this.best_indi = new List<int>();
-                
-                
-                this.best_score = St.best_score;
-                this.crossing_share = St.crossing_share;
-                this.turnaments_share = St.turnaments_share;
-                this.mutation_share = St.mutation_share;
-
-
-                //foreach(var Gen in St.BestIndi)
-                //{
-                //    this.best_indi.Add(Gen.gen);
-                //}
-                this.best_indi = St.BestIndi.Select(c => c.gen).ToList();
-                //foreach(var Indi in St.Population)
-                //{
-                //    List<int> indi = new List<int>();
-                //    foreach(var Gen in Indi.indi)
-                //    {
-                //        indi.Add(Gen.gen);
-                //    }
-                //    this.population.Add(indi);
-                //}
-                foreach (var Indi in St.Population)
-                {   
-                    this.population.Add(Indi.indi.Select(c => c.gen).ToList());
-                }
-                //foreach (var Path in St.Distances)
-                //{
-                //    List<int> path = new List<int>();
-                //    foreach(var city in Path.path)
-                //    {
-                //        path.Add(city.CityValue);
-                //    }
-                //    this.distance.Add(path);
-                //}
-                foreach (var Path in St.Distances)
-                {
-                    
-                    this.distance.Add(Path.path.Select(c => c.CityValue).ToList());
-                }
-            }
-        }
+        
         public void LifeCycle()
         {
             crossover_stage();
             mutation_stage();
-            selection_stage();            
+            selection_stage();
+            iternum++;
         }
         void generate_population()
         {

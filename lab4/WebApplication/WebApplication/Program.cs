@@ -1,84 +1,122 @@
 using GenAlgorithm_Kasumov;
+using Microsoft.AspNetCore.Http;
+using System.Diagnostics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder();
 var app = builder.Build();
-GenAlg? Alg;
-void InitDistance(int N, List<List<int>> distance)
-{
-    
-    int L = 10;
-    int R = 100;
-    Random rnd = new Random();
-    List<int> tmp = new List<int>();
-//    distance = new List<List<int>>();
-    for (int i = 0; i < N; ++i)
-    {
-        List<int> ints = new List<int>();
-        for (int j = 0; j < N; ++j)
-        {
-            ints.Add(0);
-        }
-        distance.Add(ints);
-    }
-    for (int i = 0; i < N; ++i)
-    {
-        tmp.Add(R);
-    }
-    for (int i = 0; i < N; ++i)
-    {
-        for (int j = i + 1; j < N; ++j)
-        {
-            if (i == 0)
-            {
-                distance[i][j] = rnd.Next(L, R);
-            }
-            else
-            {
-                distance[i][j] = rnd.Next(L, tmp[i] + tmp[j]);
-            }
-        }
-        distance[i][i] = 0;
-        for (int j = 0; j < N; ++j)
-        {
-            distance[j][i] = distance[i][j];
-        }
+app.UseStaticFiles();
 
-        for (int j = i + 1; j < N; ++j)
-        {
-            tmp[j] = Math.Min(tmp[j], distance[i][j]);
-        }
-    }
-}
-app.Run(async (context) =>
+app.MapPut("/experiments", (Parameters parameters) =>
 {
-var response = context.Response;
-var request = context.Request;
-if (request.Path == "/api/user")
-{
-    var message = "Некорректные данные";   // содержание сообщения по умолчанию
+    var id = Guid.NewGuid();
     List<List<int>> distance = new List<List<int>>();
+    MatrixGenerator.InitDistance(parameters.MatrixSize, distance);
+    GenAlg Alg = new GenAlg(distance, parameters.IndividNums, parameters.TournamentsShare, parameters.CrossingShare, parameters.MutationShare);
+    ExperimentBank.AddExperiment(id, new Experiment(Alg, parameters));
 
-    try
-    {
-        var person = await request.ReadFromJsonAsync<Person>();
-        if (person != null)
-        {
-            InitDistance(person.MatrixSize, distance);
-            message = "hello";
-            Alg = new GenAlg(distance, person.IndividNums, person.TournamentsShare, person.CrossingShare, person.MutationShare);
-        }
-    }
-        catch { }
-        // отправляем пользователю данные
-        await response.WriteAsJsonAsync(new {text=message, matrix = JSONConverter.MatrixToJson(distance) });
-    }
-    else
-    {
-        response.ContentType = "text/html; charset=utf-8";
-        await response.SendFileAsync("html/index.html");
-    }
+    return Results.Ok(new { expid = id, matrix = JSONConverter.MatrixToJson(distance) });
 });
+
+app.MapPost("/experiments/{id:guid}", (Guid id) =>
+{
+    Experiment experiment;
+    if(!ExperimentBank.Get(id, out experiment))
+    {
+        return Results.NotFound("Experiment not found");
+    }
+    experiment.oprimizer.LifeCycle();
+    return Results.Ok(new { result = experiment.oprimizer.best_score, epoch = experiment.oprimizer.iternum });
+    
+
+});
+
+app.MapPost("/experiments/{id:guid}/start", async (HttpContext context, Guid id) =>
+{
+    Experiment experiment;
+    double prev = Double.MaxValue;
+    if (!ExperimentBank.Get(id, out experiment))
+        return Results.NotFound("Not found");
+
+    if (ExperimentBank.GetEvolutionTokens(id))
+    {
+        return Results.BadRequest("Оптимизация уже запущена");
+    }
+    var cnctkn = new CancellationTokenSource();
+    ExperimentBank.EvolutionTokens[id] = cnctkn;
+
+    _ = Task.Run(async () =>
+    {
+        
+            try
+            {
+                while (experiment.oprimizer.population.Count > 2)
+                {
+                    if (cnctkn.Token.IsCancellationRequested)
+                        break;
+                    experiment.oprimizer.LifeCycle();
+                }
+            }
+            catch (Exception)
+            {
+                Debug.WriteLine($"Experiment {id} evolution stopped.");
+            }
+            finally
+            {
+                ExperimentBank.EvolutionTokens.Remove(id);
+            }
+
+        
+    }); //Разделение потока
+    return Results.Ok("Оптимизация началась");
+});
+
+app.MapPost("/experiments/{id:guid}/stop", (Guid id) =>
+{
+    Experiment experiment;
+    if (!ExperimentBank.EvolutionTokens.TryGetValue(id, out var cnctkn))
+        return Results.BadRequest("Нечего останавливать");
+
+    if (!ExperimentBank.Get(id, out experiment))
+        return Results.NotFound("Not found");
+
+    cnctkn.Cancel(); // Остановка эволюции
+    return Results.Ok(new { result = experiment.oprimizer.best_score, epoch = experiment.oprimizer.iternum });
+
+});
+
+app.MapDelete("/experiments/{id:guid}", (Guid id) =>
+{
+    if (ExperimentBank.Experiments.Remove(id))
+        return Results.Ok("Experiment deleted");
+
+    return Results.NotFound("Experiment not found");
+    
+});
+
+app.MapGet("/experiments/{id:guid}/stream", async (HttpContext context, Guid id) =>
+{
+    Experiment experiment;
+    if (!ExperimentBank.Get(id, out experiment))
+    {
+        await context.Response.WriteAsync("Experiment not found");
+        return;
+    }
+    context.Response.ContentType = "text/event-stream";
+    var data = $"data: {{" +
+            $" \"epochs\": {experiment.oprimizer.iternum}," +
+            $" \"best\": \"{experiment.oprimizer.best_score}\"}}\n\n";
+
+    await context.Response.WriteAsJsonAsync(new {epochs = experiment.oprimizer.iternum , best= experiment.oprimizer.best_score });
+    await context.Response.Body.FlushAsync();
+    await Task.Delay(500); 
+
+
+});
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
-public record Person(double CrossingShare, double TournamentsShare, double MutationShare, int IndividNums, int MatrixSize);
+public record Parameters(double CrossingShare, double TournamentsShare, double MutationShare, int IndividNums, int MatrixSize);
+
+public partial class Program { }
